@@ -1,0 +1,83 @@
+# Default values for proxysql.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 2
+
+image:
+  repository: proxysql
+  tag: 2.0.8
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+admin:
+  username: proxysql-admin
+  password: adminpassw0rd
+
+monitor:
+  username: monitor
+  password: monitorpassw0rd
+
+proxy:
+  version: ""
+  servers:
+    - address: "127.0.0.1"
+      port: 3306
+      hostgroup: 10
+      max_connections: 100
+    - address: "127.0.0.3"
+      port: 3306
+      hostgroup: 10
+      max_connections: 100
+    - address: "127.0.0.2"
+      port: 3306
+      hostgroup: 10
+      max_connections: 100
+
+  users:
+    - username: wordpress
+      password: pass
+      default_hostgroup: 10
+      active: 1
+
+  query_rules:
+    - rule_id: 100
+      active: 1
+      match_pattern: ""
+      destination_hostgroup: 10
+      apply: 1
+    - rule_id: 200
+      active: 1
+      match_pattern: ""
+      destination_hostgroup: 10
+      apply: 1
+
+ingress:
+  enabled: false
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+service:
+  mysql:
+    port: 6033
+  admin:
+    port: 6032
+  type: NodePort
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

@@ -1,0 +1,62 @@
+{{- $numOfservers := len .Values.proxy.servers -}}
+{{- $numOfrules := len .Values.proxy.query_rules -}}
+{{- $numOfusers := len .Values.proxy.users }}
+datadir="/var/lib/proxysql"
+admin_variables=
+{
+        admin_credentials="{{ .Values.admin.username }}:{{ .Values.admin.password }}"
+        mysql_ifaces="0.0.0.0:6032"
+        refresh_interval=2000
+}
+mysql_variables=
+{
+        threads=4
+        max_connections=2048
+        default_query_delay=0
+        default_query_timeout=36000000
+        have_compress=true
+        poll_timeout=2000
+        interfaces="0.0.0.0:6033;/tmp/proxysql.sock"
+        default_schema="information_schema"
+        stacksize=1048576
+        server_version="5.1.30"
+        connect_timeout_server=10000
+        monitor_history=60000
+        monitor_connect_interval=200000
+        monitor_ping_interval=200000
+        ping_interval_server_msec=10000
+        ping_timeout_server=200
+        commands_stats=true
+        sessions_sort=true
+        monitor_username={{ .Values.monitor.username | quote }}
+        monitor_password={{ .Values.monitor.password | quote }}
+}
+
+mysql_servers =
+(
+  {{- range $index , $server := .Values.proxy.servers }}
+        { address={{ $server.address | quote }} , port={{ $server.port | quote }} , hostgroup={{ $server.hostgroup }}, max_connections= {{ $server.max_connections }} }{{- if lt $index ( sub ($numOfservers|int) 1 ) -}}, {{- end }}
+  {{- end }}
+)
+mysql_users =
+(
+  {{- range $index, $user := .Values.proxy.users }}
+        { username =  {{ $user.username | quote }} , password = {{ $user.password | quote }} , default_hostgroup = {{ $user.default_hostgroup }} , active = {{ $user.active }} }{{- if lt $index ( sub ($numOfusers|int) 1 ) -}},{{ end }}
+  {{- end }}
+)
+mysql_query_rules =
+(
+  {{- range $index, $rule := .Values.proxy.query_rules }}
+        {
+                rule_id={{ $rule.rule_id }}
+                active={{ $rule.active }}
+                match_pattern={{ $rule.match_pattern | quote }}
+                destination_hostgroup={{ $rule.destination_hostgroup }}
+                apply={{ $rule.apply }}
+        }{{- if lt $index ( sub ($numOfrules|int) 1 ) -}},{{ end }}
+  {{- end }}
+)
+mysql_replication_hostgroups =
+(
+        { writer_hostgroup=10, reader_hostgroup=20, comment="MySQL Replication 5.7" }
+)
